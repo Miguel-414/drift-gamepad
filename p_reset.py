@@ -6,6 +6,7 @@ import XInput
 # telemetria
 from telemetria import registrar_drift
 
+# escritura = False
 recolectar_telemetria = False
 
 target_control = vg.VX360Gamepad()
@@ -19,8 +20,10 @@ def callback_vibracion(client, target, large_motor, small_motor, led_number, use
     fuerza_S = small_motor / 255.0
     # Probamos enviar a todos los mandos conectados (0 al 3)
     # por si el ID de tu mando físico cambió al conectar el virtual
-    for i in range(4):
-        XInput.set_vibration(i, fuerza_L, fuerza_S)
+    try:
+        XInput.set_vibration(0, fuerza_L, fuerza_S)
+    except:
+        pass
 
 
 # Registramos la vibración en el mando virtual
@@ -54,7 +57,8 @@ botones_map = {
 }
 
 
-print(f"Corrector activo. Detectando movimientos lentos en zona SUPERIOR.")
+# if escritura:
+#     print(f"Corrector activo. Detectando movimientos lentos en zona SUPERIOR.")
 
 
 def procesar_control():
@@ -154,8 +158,9 @@ def procesar_control():
                     if valor_fisico > 0 and cambio > 0 and abs(velocidad) <= umbral_velocidad:
                         if LIMITE_X_MIN <= estado['RX'] <= LIMITE_X_MAX:
                             valor_final = 0.0
-                            print(
-                                f"Corrigiendo zona INFERIOR (Positiva): {valor_fisico:.4f}")
+                            # if escritura:
+                            #     print(
+                            #         f"Corrigiendo zona INFERIOR (Positiva): {valor_fisico:.4f}")
 
                 estado['RY'] = valor_final
                 target_control.right_joystick_float(
@@ -176,6 +181,7 @@ if __name__ == "__main__":
     try:
         procesar_control()
     except KeyboardInterrupt:
-        for i in range(4):
-            XInput.set_vibration(i, 0, 0)
-        print("Script detenido.")
+
+        XInput.set_vibration(0, 0, 0)
+        # if escritura:
+        #     print("Script detenido.")
