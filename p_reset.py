@@ -9,6 +9,8 @@ from telemetria import registrar_drift
 # escritura = False
 recolectar_telemetria = False
 
+block = True
+
 target_control = vg.VX360Gamepad()
 
 # --- LÓGICA DE VIBRACIÓN ---
@@ -33,7 +35,8 @@ estado = {
     'LX': 0.0, 'LY': 0.0,
     'RX': 0.0, 'RY': 0.0,
     'LT': 0, 'RT': 0,
-    'A_PULSADO': False
+    'A_PULSADO': False,
+    'R3_PRESIONADO': False
 }
 
 ultimo_valor_ry = 0.0
@@ -72,6 +75,9 @@ def procesar_control():
 
             # Lógica de Botones
             if event.code in botones_map:
+                if event.code == 'BTN_THUMBR':
+                    estado['R3_PRESIONADO'] = (event.state == 1)
+
                 if event.code == 'BTN_SOUTH':
                     estado['A_PULSADO'] = (event.state == 1)
 
@@ -142,25 +148,33 @@ def procesar_control():
                 valor_fisico = event.state / 32768.0
                 valor_final = valor_fisico
 
-                if dt > 0:
-                    cambio = valor_fisico - ultimo_valor_ry
-                    velocidad = cambio / dt
-
-                    if estado['A_PULSADO'] and recolectar_telemetria:
-                        registrar_drift(estado, valor_fisico,
-                                        velocidad, cambio, dt)
-
-                    # NUEVA LÓGICA DE CORRECCIÓN:
-                    # 1. valor_fisico > 0 (La palanca está en la mitad SUPERIOR)
-                    # 2. velocidad <= umbral_velocidad (El movimiento es lento)
-                    # 3. Condición de X (X está centrado)
-
-                    if valor_fisico > 0 and cambio > 0 and abs(velocidad) <= umbral_velocidad:
+                if block:
+                    if valor_fisico > 0:
+                        # Si está dentro del rango X establecido
                         if LIMITE_X_MIN <= estado['RX'] <= LIMITE_X_MAX:
-                            valor_final = 0.0
-                            # if escritura:
-                            #     print(
-                            #         f"Corrigiendo zona INFERIOR (Positiva): {valor_fisico:.4f}")
+                            # SOLO permite moverse si el R3 (Joystick) está espichado/presionado
+                            if not estado['R3_PRESIONADO']:
+                                valor_final = 0.0  # Bloqueado
+                else:
+                    if dt > 0:
+                        cambio = valor_fisico - ultimo_valor_ry
+                        velocidad = cambio / dt
+
+                        if estado['A_PULSADO'] and recolectar_telemetria:
+                            registrar_drift(estado, valor_fisico,
+                                            velocidad, cambio, dt)
+
+                        # NUEVA LÓGICA DE CORRECCIÓN:
+                        # 1. valor_fisico > 0 (La palanca está en la mitad SUPERIOR)
+                        # 2. velocidad <= umbral_velocidad (El movimiento es lento)
+                        # 3. Condición de X (X está centrado)
+
+                        if valor_fisico > 0 and cambio > 0 and abs(velocidad) <= umbral_velocidad:
+                            if LIMITE_X_MIN <= estado['RX'] <= LIMITE_X_MAX:
+                                valor_final = 0.0
+                                # if escritura:
+                                #     print(
+                                #         f"Corrigiendo zona INFERIOR (Positiva): {valor_fisico:.4f}")
 
                 estado['RY'] = valor_final
                 target_control.right_joystick_float(
