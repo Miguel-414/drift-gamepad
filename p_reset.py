@@ -22,10 +22,7 @@ def callback_vibracion(client, target, large_motor, small_motor, led_number, use
     fuerza_S = small_motor / 255.0
     # Probamos enviar a todos los mandos conectados (0 al 3)
     # por si el ID de tu mando físico cambió al conectar el virtual
-    try:
-        XInput.set_vibration(0, fuerza_L, fuerza_S)
-    except:
-        pass
+    XInput.set_vibration(0, fuerza_L, fuerza_S)
 
 
 # Registramos la vibración en el mando virtual
@@ -68,15 +65,19 @@ def procesar_control():
     global ultimo_valor_ry, ultimo_tiempo
 
     while True:
+        # todo: Hacer que termine el programa si el mando se desconecta
         events = get_gamepad()
+
         for event in events:
             ahora = time.time()
             dt = ahora - ultimo_tiempo
+            print(dir(event))
 
             # Lógica de Botones
             if event.code in botones_map:
                 if event.code == 'BTN_THUMBR':
                     estado['R3_PRESIONADO'] = (event.state == 1)
+                    print(event.code)
 
                 if event.code == 'BTN_SOUTH':
                     estado['A_PULSADO'] = (event.state == 1)
