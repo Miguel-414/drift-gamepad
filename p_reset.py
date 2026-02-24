@@ -61,8 +61,9 @@ def procesar_control():
     global ultimo_valor_ry, ultimo_tiempo
 
     while True:
-        # Verifica si el mando 0 está conectado
-        # ? Realmente no se por que funciona pero si quito esta linea deja de funcionar
+        # !IMPORTANTE: Esta llamada refresca el estado del driver, lo que permite
+        # que get_gamepad() lance UnpluggedError si el mando se desconectó.
+        # Sin esta línea, get_gamepad() se bloquea indefinidamente.
         XInput.get_connected()[0]
 
         try:
@@ -89,7 +90,6 @@ def procesar_control():
                 else:
                     target_control.release_button(botones_map[event.code])
 
-            if event.code in botones_map:
                 if event.state == 1:
                     target_control.press_button(botones_map[event.code])
                 else:
@@ -197,8 +197,9 @@ def procesar_control():
 if __name__ == "__main__":
     try:
         procesar_control()
+    except KeyboardInterrupt:
+        print('Fin del programa')
     finally:
-
         XInput.set_vibration(0, 0, 0)
-        # if escritura:
-        #     print("Script detenido.")
+        target_control.reset()
+        target_control.update()
