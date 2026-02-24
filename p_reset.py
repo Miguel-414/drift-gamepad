@@ -1,5 +1,5 @@
 import vgamepad as vg
-from inputs import get_gamepad
+from inputs import get_gamepad, UnpluggedError
 import time
 import XInput
 
@@ -57,27 +57,29 @@ botones_map = {
 }
 
 
-# if escritura:
-#     print(f"Corrector activo. Detectando movimientos lentos en zona SUPERIOR.")
-
-
 def procesar_control():
     global ultimo_valor_ry, ultimo_tiempo
 
     while True:
-        # todo: Hacer que termine el programa si el mando se desconecta
-        events = get_gamepad()
+        # Verifica si el mando 0 está conectado
+        # ? Realmente no se por que funciona pero si quito esta linea deja de funcionar
+        XInput.get_connected()[0]
+
+        try:
+            events = get_gamepad()
+        except UnpluggedError:
+            # Si esto falla, es que el hardware ya no responde
+            print("\n[!] Error crítico: Mando físico desconectado.")
+            break
 
         for event in events:
             ahora = time.time()
             dt = ahora - ultimo_tiempo
-            print(dir(event))
 
             # Lógica de Botones
             if event.code in botones_map:
                 if event.code == 'BTN_THUMBR':
                     estado['R3_PRESIONADO'] = (event.state == 1)
-                    print(event.code)
 
                 if event.code == 'BTN_SOUTH':
                     estado['A_PULSADO'] = (event.state == 1)
@@ -195,7 +197,7 @@ def procesar_control():
 if __name__ == "__main__":
     try:
         procesar_control()
-    except KeyboardInterrupt:
+    finally:
 
         XInput.set_vibration(0, 0, 0)
         # if escritura:
