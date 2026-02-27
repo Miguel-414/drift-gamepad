@@ -64,7 +64,7 @@ def procesar_control():
         # !IMPORTANTE: Esta llamada refresca el estado del driver, lo que permite
         # que get_gamepad() lance UnpluggedError si el mando se desconectó.
         # Sin esta línea, get_gamepad() se bloquea indefinidamente.
-        XInput.get_connected()[0]
+        # XInput.get_connected()[0]
 
         try:
             events = get_gamepad()
@@ -84,11 +84,6 @@ def procesar_control():
 
                 if event.code == 'BTN_SOUTH':
                     estado['A_PULSADO'] = (event.state == 1)
-
-                if event.state == 1:
-                    target_control.press_button(botones_map[event.code])
-                else:
-                    target_control.release_button(botones_map[event.code])
 
                 if event.state == 1:
                     target_control.press_button(botones_map[event.code])
